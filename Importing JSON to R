@@ -1,0 +1,50 @@
+# https://www.kaggle.com/datasnaek/league-of-legends
+
+# Make sure to change to the file path for your computer
+# Read the LoL games dataset
+gamesdf <- read.csv("C:\\Users\\NAME\\Desktop\\LOL\\games.csv")
+
+str(gamesdf)
+
+colnames(gamesdf)
+
+# See below to import the JSON files into R as dataframes
+
+library(jsonlite)
+
+# Champions JSON to R
+
+# Make sure to change to the file path for your computer
+champs <- fromJSON("C:\\Users\\NAME\\Desktop\\LOL\\champion_info.json")
+
+# Save the champion list into a separate list
+pogchamp <- champs[[3]]
+
+# Problem: Each champion is treated as a list
+# Meaning it is a list of 138 lists
+
+# Textbook Chapter 11 Page 134-135
+# Converts lists into a dataframe
+numRowsChamp <- length(pogchamp)
+
+champ_df <- data.frame(matrix(unlist(pogchamp), nrow=numRowsChamp, byrow=T), stringsAsFactors = FALSE)
+
+# Change the names of the columns
+names(champ_df) <- c("ChampTitle", "ChampID", "ChampionKey", "ChampionName")
+
+names(champ_df)
+
+# Summons JSON to R
+
+# Make sure to change to the file path for your computer
+summoners <- fromJSON("C:\\Users\\NAME\\Desktop\\LOL\\summoner_spell_info.json")
+
+# Save the champion list into a separate list
+justsummoners <- summoners[[3]]
+numRowsSummoners <- length(justsummoners)
+
+sum_spell_df <- data.frame(matrix(unlist(justsummoners), nrow=numRowsSummoners, byrow=T), stringsAsFactors = FALSE)
+
+# Update the names of the summoner list
+names(sum_spell_df) <- c("SummonerID","SummonerLevel","SummonerName","SummonerKey","SummonerDescription")
+names(sum_spell_df)
