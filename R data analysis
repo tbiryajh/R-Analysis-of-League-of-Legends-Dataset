@@ -1,0 +1,450 @@
+#Updated as of Saturday 08-December-2018
+
+#1.	Who is the champion with the highest win rate? Lowest win rate?
+
+#Code omitted. Please create the following function:
+#Create a function that takes in a champion ID and returns the number of games they were present in. 
+#Create a function that takes in a champion ID and returns the win rate for that champion. 
+
+#BQ1: Win rate per champion
+
+max(unlist(champ_df$ChampID))
+
+min(unlist(champ_df$ChampID))
+
+#Add winrate to champ dataframe
+for (x in 1:516){
+  
+  champ_df$winrate[champ_df$ChampID==x] <- winRate(x)
+  
+}
+
+#Highest Win Rate
+champ_df$ChampionName[which.max(champ_df$winrate)]
+
+#Lowest Win rate
+champ_df$ChampionName[which.min(champ_df$winrate)]
+
+#Win rate plot
+library("ggplot2")
+
+#Add Champion Names as rownames
+row.names(champ_df) <- champ_df$ChampionName
+row.names(champ_df)
+
+#Overall Plot
+ggplot(champ_df, aes(x=row.names(champ_df), y=winrate))  + geom_col(color="black", fill="pink") + coord_flip() + ggtitle("Bar Chart: Win Rate per Champion") + theme(plot.title = element_text(hjust = 0.5)) + ylab("Win Rate (%)") + xlab("Champion Name") + theme(axis.text.y = element_text(size = 3) )
+
+#Split the plot between above and below average win rates       
+aboveaveragechamps <- champ_df[champ_df$winrate > mean(champ_df$winrate),]
+
+belowaveragechamps <- champ_df[champ_df$winrate < mean(champ_df$winrate),]
+
+ggplot(aboveaveragechamps, aes(x=row.names(aboveaveragechamps), y=winrate))  + geom_col(color="black", fill="pink") + coord_flip() + ggtitle("Bar Chart: Win Rate per Above Average Champion") + theme(plot.title = element_text(hjust = 0.5)) + ylab("Win Rate (%)") + xlab("Champion Name") + theme(axis.text.y = element_text(hjust=1, size = 6.5) )
+
+ggplot(belowaveragechamps, aes(x=row.names(belowaveragechamps), y=winrate))  + geom_col(color="black", fill="pink") + coord_flip() + ggtitle("Bar Chart: Win Rate per Below Average Champion") + theme(plot.title = element_text(hjust = 0.5)) + ylab("Win Rate (%)") + xlab("Champion Name") + theme(axis.text.y = element_text(hjust=1, size = 6.5) )
+
+#top 25 and bottom 25 champs
+
+quantile(champ_df$winrate, c(0.25, 0.75))
+
+top25champs <- champ_df[champ_df$winrate > quantile(champ_df$winrate, 0.75),]
+
+bottom25champs <- champ_df[champ_df$winrate < quantile(champ_df$winrate, 0.25),]
+
+ggplot(top25champs, aes(x=row.names(top25champs), y=winrate))  + geom_col(color="black", fill="pink") + coord_flip() + ggtitle("Bar Chart: Win Rate for Top 25% Champion") + theme(plot.title = element_text(hjust = 0.5)) + ylab("Win Rate (%)") + xlab("Champion Name") + theme(axis.text.y = element_text(hjust=1, size =8))
+
+ggplot(bottom25champs, aes(x=row.names(bottom25champs), y=winrate))  + geom_col(color="black", fill="pink") + coord_flip() + ggtitle("Bar Chart: Win Rate Bottom 25% Champion") + theme(plot.title = element_text(hjust = 0.5)) + ylab("Win Rate (%)") + xlab("Champion Name") + theme(axis.text.y = element_text(hjust=1, size = 8) )
+
+#2.	What does the highest win rate champion lose to the most?
+
+library("modeest")
+#Champ ID with highest win rate
+highwinratechampid <- as.numeric(unlist(champ_df$ChampID[which.max(champ_df$winrate)]))
+
+#Generate a list Team 2 champions who won a game against a team with at least one high win rate champion 
+T1bestchampcounter <- 
+  as.vector(rbind(games_df$t2_champ1id[games_df$winner==2 & (games_df$t1_champ1id==highwinratechampid | games_df$t1_champ2id==highwinratechampid| games_df$t1_champ3id==highwinratechampid| games_df$t1_champ4id==highwinratechampid| games_df$t1_champ5id==highwinratechampid)],
+        games_df$t2_champ2id[games_df$winner==2 & (games_df$t1_champ1id==highwinratechampid | games_df$t1_champ2id==highwinratechampid| games_df$t1_champ3id==highwinratechampid| games_df$t1_champ4id==highwinratechampid| games_df$t1_champ5id==highwinratechampid)],
+        games_df$t2_champ3id[games_df$winner==2 & (games_df$t1_champ1id==highwinratechampid | games_df$t1_champ2id==highwinratechampid| games_df$t1_champ3id==highwinratechampid| games_df$t1_champ4id==highwinratechampid| games_df$t1_champ5id==highwinratechampid)],
+        games_df$t2_champ4id[games_df$winner==2 & (games_df$t1_champ1id==highwinratechampid | games_df$t1_champ2id==highwinratechampid| games_df$t1_champ3id==highwinratechampid| games_df$t1_champ4id==highwinratechampid| games_df$t1_champ5id==highwinratechampid)],
+        games_df$t2_champ5id[games_df$winner==2 & (games_df$t1_champ1id==highwinratechampid | games_df$t1_champ2id==highwinratechampid| games_df$t1_champ3id==highwinratechampid| games_df$t1_champ4id==highwinratechampid| games_df$t1_champ5id==highwinratechampid)]))
+
+#Team 2's Best Counter to the Highest Win Rate Champion        
+champ_df$ChampionName[champ_df$ChampID==mfv(T1bestchampcounter)]
+
+#Generate a list Team 1 champions who won a game against a team with at least one high win rate champion
+T2bestchampcounter <- 
+  as.vector(rbind(games_df$t1_champ1id[games_df$winner==1 & (games_df$t2_champ1id==highwinratechampid | games_df$t2_champ2id==highwinratechampid| games_df$t2_champ3id==highwinratechampid| games_df$t2_champ4id==highwinratechampid| games_df$t2_champ5id==highwinratechampid)],
+                  games_df$t1_champ2id[games_df$winner==1 & (games_df$t2_champ1id==highwinratechampid | games_df$t2_champ2id==highwinratechampid| games_df$t2_champ3id==highwinratechampid| games_df$t2_champ4id==highwinratechampid| games_df$t2_champ5id==highwinratechampid)],
+                  games_df$t1_champ3id[games_df$winner==1 & (games_df$t2_champ1id==highwinratechampid | games_df$t2_champ2id==highwinratechampid| games_df$t2_champ3id==highwinratechampid| games_df$t2_champ4id==highwinratechampid| games_df$t2_champ5id==highwinratechampid)],
+                  games_df$t1_champ4id[games_df$winner==1 & (games_df$t2_champ1id==highwinratechampid | games_df$t2_champ2id==highwinratechampid| games_df$t2_champ3id==highwinratechampid| games_df$t2_champ4id==highwinratechampid| games_df$t2_champ5id==highwinratechampid)],
+                  games_df$t1_champ5id[games_df$winner==1 & (games_df$t2_champ1id==highwinratechampid | games_df$t2_champ2id==highwinratechampid| games_df$t2_champ3id==highwinratechampid| games_df$t2_champ4id==highwinratechampid| games_df$t2_champ5id==highwinratechampid)]))
+
+#Team 1's Best Counter to Team 1's Highest Win Rate Champion        
+champ_df$ChampionName[champ_df$ChampID==mfv(T2bestchampcounter)]
+
+
+                           
+#3.	What are the top two summoner spells for the champion with the most wins?
+
+library("modeest")
+# First Slot Summoner Spell
+TopSummonerOne <- as.vector(rbind(games_df$t1_champ1_sum1[games_df$t1_champ1id==highwinratechampid], 
+                                  games_df$t1_champ2_sum1[games_df$t1_champ2id==highwinratechampid],
+                                  games_df$t1_champ3_sum1[games_df$t1_champ3id==highwinratechampid], 
+                                  games_df$t1_champ4_sum1[games_df$t1_champ4id==highwinratechampid],
+                                  games_df$t1_champ5_sum1[games_df$t1_champ5id==highwinratechampid],
+                                  games_df$t2_champ1_sum1[games_df$t2_champ1id==highwinratechampid], 
+                                  games_df$t2_champ2_sum1[games_df$t2_champ2id==highwinratechampid],
+                                  games_df$t2_champ3_sum1[games_df$t2_champ3id==highwinratechampid], 
+                                  games_df$t2_champ4_sum1[games_df$t2_champ4id==highwinratechampid],
+                                  games_df$t2_champ5_sum1[games_df$t2_champ5id==highwinratechampid]))
+
+# First Slot spell that is ran the most by the champ with most wins
+sum_spell_df$SummonerName[sum_spell_df$SummonerID==(mfv(TopSummonerOne))]
+
+# Second Slot Summoner Spell
+TopSummonerTwo <- as.vector(rbind(games_df$t1_champ1_sum2[games_df$t1_champ1id==highwinratechampid], 
+                                  games_df$t1_champ2_sum2[games_df$t1_champ2id==highwinratechampid],
+                                  games_df$t1_champ3_sum2[games_df$t1_champ3id==highwinratechampid], 
+                                  games_df$t1_champ4_sum2[games_df$t1_champ4id==highwinratechampid],
+                                  games_df$t1_champ5_sum2[games_df$t1_champ5id==highwinratechampid],
+                                  games_df$t2_champ1_sum2[games_df$t2_champ1id==highwinratechampid], 
+                                  games_df$t2_champ2_sum2[games_df$t2_champ2id==highwinratechampid],
+                                  games_df$t2_champ3_sum2[games_df$t2_champ3id==highwinratechampid], 
+                                  games_df$t2_champ4_sum2[games_df$t2_champ4id==highwinratechampid],
+                                  games_df$t2_champ5_sum2[games_df$t2_champ5id==highwinratechampid]))
+
+# Second Slot spell that is ran the most by the champ with most wins
+sum_spell_df$SummonerName[sum_spell_df$SummonerID==(mfv(TopSummonerTwo))]
+
+
+#4.	What is the best composition of champions? 
+#Work In Progress. Not completed at this time.
+
+attach(games_df)
+#Team comp dataframe separation
+bestteamcomp <- data.frame(gameId, winner, t1_champ1id, t1_champ2id,
+                           t1_champ3id, t1_champ4id, t1_champ5id,
+                           t2_champ1id, t2_champ2id, t2_champ3id,
+                           t2_champ4id, t2_champ5id)
+
+T1bestteamcomp <- data.frame(gameId[games_df$winner==1], 
+                             winner[games_df$winner==1], 
+                            t1_champ1id[games_df$winner==1], 
+                            t1_champ2id[games_df$winner==1],
+                           t1_champ3id[games_df$winner==1], 
+                           t1_champ4id[games_df$winner==1], 
+                           t1_champ5id[games_df$winner==1])
+
+#Check for duplicates FALSE is unique
+T1bestteamcomp$Duplicate <- duplicated(T1bestteamcomp[3:7])
+
+length(T1bestteamcomp$Duplicate)
+
+#Save only duplicates, unsure if in duplicated shows 
+#unique combinations/permutations 
+T1bestteamcomp <- T1bestteamcomp[T1bestteamcomp$Duplicate==TRUE,]
+#Note 222 combinations are duplicates
+
+#Need to tabulate unqiue values accross multiple coumns
+#figure out the counts that occur the most
+T1bestteamcompTABLE <- unique(T1bestteamcomp[3:7])
+T1bestteamcompTABLE <- tabulate(T1bestteamcompTABLE)
+T1bestteamcompTABLE
+
+#216 are found to be unique
+
+#5.	What is the most banned champion? What is their win rate?
+library("modeest")
+allbannedchampions <- as.vector(rbind(games_df$t1_ban1,
+                                      games_df$t1_ban2,
+                                      games_df$t1_ban3,
+                                      games_df$t1_ban4,
+                                      games_df$t1_ban5,
+                                      games_df$t2_ban1,
+                                      games_df$t2_ban2,
+                                      games_df$t2_ban3,
+                                      games_df$t2_ban4,
+                                      games_df$t2_ban5))
+#Name of most banned champion
+champ_df$ChampionName[champ_df$ChampID==mfv(allbannedchampions)]
+
+
+# Win Rate of the champion with the most bans
+champ_df$winrate[champ_df$ChampID==mfv(allbannedchampions)]
+
+#6.	Which objective kill count is the best predictor of winner? 
+#Work In Progress: Address the validity of linear models
+
+#Create a separate dataframe with the kill objective and scale them as appropriate
+bestobjectivekilltable <- data.frame(games_df$winner,
+                                scale(games_df$t1_towerKills, center = FALSE, scale = TRUE), 
+                                scale(games_df$t1_inhibitorKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t1_baronKills, center = FALSE, scale = TRUE), 
+                                scale(games_df$t1_dragonKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t1_riftHeraldKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t2_towerKills, center = FALSE, scale = TRUE), 
+                                scale(games_df$t2_inhibitorKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t2_baronKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t2_dragonKills, center = FALSE, scale = TRUE),
+                                scale(games_df$t2_riftHeraldKills, center = FALSE, scale = TRUE)
+                                )
+#Rename the columns for objective kill table
+colnames(bestobjectivekilltable) <-  c("winner", "t1_towerKills", 
+                                       "t1_inhibitorKills", "t1_baronKills", 
+                                       "t1_dragonKills", "t1_riftHeraldKills",
+                                       "t2_towerKills", 
+                                       "t2_inhibitorKills", "t2_baronKills", 
+                                       "t2_dragonKills", "t2_riftHeraldKills")
+
+#lm will receive factors
+#bestobjectivekilltable$winner <- as.factor(bestobjectivekilltable$winner)
+
+#Linear Models?
+summary(lm(formula= winner~t1_towerKills+t2_towerKills, data=bestobjectivekilltable))
+#Team 1 All variables
+summary(lm(formula= winner~t1_towerKills+t1_inhibitorKills+t1_baronKills+t1_dragonKills+t1_riftHeraldKills, data=bestobjectivekilltable))
+#T1 rift herald kills seem to have less of an impact when looking at all variables
+
+#Team 2 All variables
+summary(lm(formula= winner~t2_towerKills+t2_inhibitorKills+t2_baronKills+t2_dragonKills+t2_riftHeraldKills, data=bestobjectivekilltable))
+#T2 rift herald kills seem to have less of an impact when looking at all variables
+
+#Winner compared to all
+summary(lm(formula= winner~., data=bestobjectivekilltable))
+#T2 dragon kills are at pvalue=0.0545
+
+#Linear Models for Winner based on if T1&T2 inhibitor kills
+summary(lm(formula= winner~t1_inhibitorKills+t2_inhibitorKills, data=bestobjectivekilltable))
+#both are significant
+
+#7.	Which side has a higher win rate?
+
+# We determine the win rate for Team 1 by dividing wins by the total games
+Team1WinRate <- length(games_df$winner[games_df$winner==1]) / length(games_df$winner) *100
+Team2WinRate <- 100 - Team1WinRate
+
+if (Team1WinRate > Team2WinRate) print("Team 1 has a higher win percentage") else print("Team 2 has a higher win percentage")
+
+#8. Which first to indicator is the best predictor of winner?
+
+#Use a linear model
+fall <- summary(lm(formula = winner ~ firstBlood+firstTower+firstInhibitor+firstBaron+firstDragon+firstRiftHerald, data=games_df))
+fbl <- summary(lm(formula = winner ~ firstBlood, data=games_df))
+fto <- summary(lm(formula = winner ~ firstTower, data=games_df))
+fin <- summary(lm(formula = winner ~ firstInhibitor, data=games_df))
+fba <- summary(lm(formula = winner ~ firstBaron, data=games_df))
+fdr <- summary(lm(formula = winner ~ firstDragon, data=games_df))
+frh <- summary(lm(formula = winner ~ firstRiftHerald, data=games_df))
+
+#7 predictors
+firsttopred <- data.frame(c("fall","fbl","fto","fin","fba","fdr","frh") , c(fall$adj.r.squared, fbl$adj.r.squared, fto$adj.r.squared, fin$adj.r.squared, fba$adj.r.squared, fdr$adj.r.squared, frh$adj.r.squared), stringsAsFactors = FALSE)
+colnames(firsttopred) <- c("model" , "adjrsquared" )
+firsttopred[which.max(firsttopred$adjrsquared), ]
+#all predictors together have the high R-squared value
+
+#Remove the lm with all first to predictors
+firsttopred <- firsttopred[-1, ]
+firsttopred[which.max(firsttopred$adjrsquared), ]
+#First inhibitor kill has high R-squared value for predictor win rate
+
+#9.	Which champion (or team composition) is in games with the most objectives?
+
+#Compile objectives for team 1
+games_df$T1CompiledObjectives[games_df$winner==1] <- (
+
+scale(games_df$t1_towerKills[games_df$winner==1], center = FALSE, scale = TRUE) + 
+scale(games_df$t1_inhibitorKills[games_df$winner==1], center = FALSE, scale = TRUE) +
+scale(games_df$t1_baronKills[games_df$winner==1], center = FALSE, scale = TRUE) +
+scale(games_df$t1_dragonKills[games_df$winner==1], center = FALSE, scale = TRUE) +
+scale(games_df$t1_riftHeraldKills[games_df$winner==1], center = FALSE, scale = TRUE) )
+
+#Return the champ with max compiled objectives for team 1
+champ_df$ChampionName[champ_df$ChampID==games_df$t1_champ1id[which.max(games_df$T1CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t1_champ2id[which.max(games_df$T1CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t1_champ3id[which.max(games_df$T1CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t1_champ4id[which.max(games_df$T1CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t1_champ5id[which.max(games_df$T1CompiledObjectives)]]
+
+#Compile objectives for team 2
+games_df$T2CompiledObjectives[games_df$winner==2] <- (
+  
+scale(games_df$t2_towerKills[games_df$winner==2], center = FALSE, scale = TRUE) +
+scale(games_df$t2_inhibitorKills[games_df$winner==2], center = FALSE, scale = TRUE) +
+scale(games_df$t2_baronKills[games_df$winner==2], center = FALSE, scale = TRUE) +
+scale(games_df$t2_dragonKills[games_df$winner==2], center = FALSE, scale = TRUE) +
+scale(games_df$t2_riftHeraldKills[games_df$winner==2], center = FALSE, scale = TRUE) )
+
+#Return the champ with max compiled objectives for team 2
+champ_df$ChampionName[champ_df$ChampID==games_df$t2_champ1id[which.max(games_df$T2CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t2_champ2id[which.max(games_df$T2CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t2_champ3id[which.max(games_df$T2CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t2_champ4id[which.max(games_df$T2CompiledObjectives)]]
+champ_df$ChampionName[champ_df$ChampID==games_df$t2_champ5id[which.max(games_df$T2CompiledObjectives)]]
+
+#10.	What is the summoner spell with the highest win rate besides flash? 
+
+#Summoner Spell Win Rate
+
+#Code omitted. Similar to the win rate function. Please create the following function:
+#Create a function that takes in a slot 1 summoner spell ID and returns the number of games they were present in. 
+#Create a function that takes in a slot 1 summoner spell and returns the win rate for that champion. 
+
+#Add Summoner slot 1 winrate to summoner spell dataframe
+for (x in 1:36){
+  
+  sum_spell_df$sum1winrate[sum_spell_df$SummonerID==x] <- sum1winrate(x)
+  
+}
+
+
+#Code omitted. Similar to the win rate function. Please create the following function:
+#Create a function that takes in a slot 2 summoner spell ID and returns the number of games they were present in. 
+#Create a function that takes in a slot 2 summoner spell and returns the win rate for that champion. 
+
+#Add Summoner slot 1 winrate to summoner spell dataframe
+for (x in 1:36){
+  
+  sum_spell_df$sum2winrate[sum_spell_df$SummonerID==x] <- sum2winrate(x)
+  
+}
+
+#Top 3 Summoner Spell Slot 1 with the highest win rates
+head(sum_spell_df[order(-sum_spell_df$sum1winrate), ], 3)
+#Ghost Ignite Barrier
+
+#Top 3 Summoner Spell Slot 2 with the highest win rates
+head(sum_spell_df[order(-sum_spell_df$sum2winrate), ], 3)
+#Barrier Heal Ignite
+
+#11.	Are champ columns random or are they associated with lane assisgnments in LoL?
+#Work in progress.
+
+#12.	Which side gets more objectives in matches?
+
+#Reference business question #9
+
+if (mean(games_df$T1CompiledObjectives, na.rm=TRUE) > mean(games_df$T2CompiledObjectives, na.rm=TRUE)) print("Team 1 gets more objectives") else print("Team 2 gets more objectives")
+
+#13.	How much is Rift Herald an indicator of win chance?
+
+# If Team 1 wins and they get the rift herald
+length(games_df$gameId[games_df$winner==1 & games_df$t1_riftHeraldKills==1])
+
+# If Team 2 wins and they get the rift herald
+length(games_df$gameId[games_df$winner==2 & games_df$t2_riftHeraldKills==1])
+
+#Number of wins as a result of killing the rift herald
+(length(games_df$gameId[games_df$winner==1 & games_df$t1_riftHeraldKills==1])
++ length(games_df$gameId[games_df$winner==2 & games_df$t2_riftHeraldKills==1]))
+
+#Wins/Games as a result of killing the rift herald
+(length(games_df$gameId[games_df$winner==1 & games_df$t1_riftHeraldKills==1]) + length(games_df$gameId[games_df$winner==2 & games_df$t2_riftHeraldKills==1]))/length(games_df$gameId)*100
+
+#Linear Model for winner against first rift herald
+summary(lm(formula = winner ~ firstRiftHerald, data=games_df))
+
+#LM with T1&T2 rift herald kills
+summary(lm(formula = winner ~ t1_riftHeraldKills+t2_riftHeraldKills, data=games_df))
+
+#Very low R-squared value. Correlation may be due to randomness
+  
+
+#14.	Create a function that takes a champion name as an input and 
+#returns the champion they lose to the most.
+
+library("modeest")
+
+nemesis <- function(cn){
+  #Convert name into champion ID
+  y <- (champ_df$ChampID[champ_df$ChampionName==cn])[1]
+  
+  n <- c(games_df$t1_champ1id[games_df$winner==2 & games_df$t1_champ1id!=y],  
+           games_df$t1_champ2id[games_df$winner==2 & games_df$t1_champ2id!=y], 
+           games_df$t1_champ3id[games_df$winner==2 & games_df$t1_champ3id!=y],  
+           games_df$t1_champ4id[games_df$winner==2 & games_df$t1_champ4id!=y], 
+           games_df$t1_champ5id[games_df$winner==2 & games_df$t1_champ5id!=y], 
+           games_df$t2_champ1id[games_df$winner==1 & games_df$t2_champ1id!=y],  
+           games_df$t2_champ2id[games_df$winner==1 & games_df$t2_champ2id!=y], 
+           games_df$t2_champ3id[games_df$winner==1 & games_df$t2_champ3id!=y],  
+           games_df$t2_champ4id[games_df$winner==1 & games_df$t2_champ4id!=y], 
+           games_df$t2_champ5id[games_df$winner==1 & games_df$t2_champ5id!=y]) 
+  n <- mfv(n)
+  n <- champ_df$ChampionName[champ_df$ChampID==n]
+  
+  return(paste(n, "is the nemesis of", cn))
+}
+
+#Test
+nemesis("Tristana")
+nemesis("Annie")
+
+#15.	Create a function that takes a champion name as an input and 
+#returns the summoner spell combination with the highest win rate.
+library("modeest")
+
+champspellwincombo <- function(cn){
+        #Convert name into champion ID
+        y <- (champ_df$ChampID[champ_df$ChampionName==cn])[1]
+        
+        #Summoner slot 1
+        sum1wins<- c(games_df$t1_champ1_sum1[games_df$winner==1 & games_df$t1_champ1id==y],  
+                     games_df$t1_champ2_sum1[games_df$winner==1 & games_df$t1_champ2id==y], 
+                     games_df$t1_champ3_sum1[games_df$winner==1 & games_df$t1_champ3id==y],  
+                     games_df$t1_champ4_sum1[games_df$winner==1 & games_df$t1_champ4id==y], 
+                     games_df$t1_champ5_sum1[games_df$winner==1 & games_df$t1_champ5id==y], 
+                     games_df$t2_champ1_sum1[games_df$winner==2 & games_df$t2_champ1id==y],  
+                     games_df$t2_champ2_sum1[games_df$winner==2 & games_df$t2_champ2id==y], 
+                     games_df$t2_champ3_sum1[games_df$winner==2 & games_df$t2_champ3id==y],  
+                     games_df$t2_champ4_sum1[games_df$winner==2 & games_df$t2_champ4id==y], 
+                     games_df$t2_champ5_sum1[games_df$winner==2 & games_df$t2_champ5id==y]) 
+        sum1wins <- mfv(sum1wins)
+        sum1wins <- sum_spell_df$SummonerName[sum_spell_df$SummonerID==sum1wins]
+        
+        #Summoner Slot 2
+        sum2wins<- c(games_df$t1_champ1_sum2[games_df$winner==1 & games_df$t1_champ1id==y],  
+          games_df$t1_champ2_sum2[games_df$winner==1 & games_df$t1_champ2id==y], 
+          games_df$t1_champ3_sum2[games_df$winner==1 & games_df$t1_champ3id==y],  
+          games_df$t1_champ4_sum2[games_df$winner==1 & games_df$t1_champ4id==y], 
+          games_df$t1_champ5_sum2[games_df$winner==1 & games_df$t1_champ5id==y], 
+          games_df$t2_champ1_sum2[games_df$winner==2 & games_df$t2_champ1id==y],  
+          games_df$t2_champ2_sum2[games_df$winner==2 & games_df$t2_champ2id==y], 
+          games_df$t2_champ3_sum2[games_df$winner==2 & games_df$t2_champ3id==y],  
+          games_df$t2_champ4_sum2[games_df$winner==2 & games_df$t2_champ4id==y], 
+          games_df$t2_champ5_sum2[games_df$winner==2 & games_df$t2_champ5id==y]) 
+      sum2wins <- mfv(sum2wins)
+      sum2wins <- sum_spell_df$SummonerName[sum_spell_df$SummonerID==sum2wins]
+  return(paste(cn, "wins the most with", sum1wins, "and", sum2wins))
+}
+
+#Test
+champspellwincombo("Tristana")
+
+#16.	Create a function that takes a champion name as an input and 
+#returns the champion they win the most with.
+library("modeest")
+
+champpartner <- function(cn){
+  #Convert name into champion ID
+  y <- (champ_df$ChampID[champ_df$ChampionName==cn])[1]
+  
+  duo <- c(games_df$t1_champ1id[games_df$winner==1 & games_df$t1_champ1id!=y],  
+               games_df$t1_champ2id[games_df$winner==1 & games_df$t1_champ2id!=y], 
+               games_df$t1_champ3id[games_df$winner==1 & games_df$t1_champ3id!=y],  
+               games_df$t1_champ4id[games_df$winner==1 & games_df$t1_champ4id!=y], 
+               games_df$t1_champ5id[games_df$winner==1 & games_df$t1_champ5id!=y], 
+               games_df$t2_champ1id[games_df$winner==2 & games_df$t2_champ1id!=y],  
+               games_df$t2_champ2id[games_df$winner==2 & games_df$t2_champ2id!=y], 
+               games_df$t2_champ3id[games_df$winner==2 & games_df$t2_champ3id!=y],  
+               games_df$t2_champ4id[games_df$winner==2 & games_df$t2_champ4id!=y], 
+               games_df$t2_champ5id[games_df$winner==2 & games_df$t2_champ5id!=y]) 
+  duo <- mfv(duo)
+  duo <- champ_df$ChampionName[champ_df$ChampID==duo]
+  
+  return(paste(cn, "wins the most with", duo))
+}
+
+#Test
+champpartner("Tristana")
